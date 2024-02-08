@@ -1,0 +1,204 @@
+create database project;
+use project;
+
+CREATE TABLE producthierarchy 
+(
+    product_id	VARCHAR(512) primary key,
+    product	VARCHAR(512),
+    type	VARCHAR(512),
+    length	VARCHAR(512),
+    category	VARCHAR(512),
+    sub_category	VARCHAR(512)
+);
+
+select * from producthierarchy;
+
+CREATE TABLE store_cities 
+(
+    store_id	VARCHAR(512) primary key,
+    storetype_id	VARCHAR(512),
+    store_szie	INT,
+    state_code	VARCHAR(512),
+    state	VARCHAR(512),
+    city	VARCHAR(512)
+);
+
+select * from store_cities;
+
+CREATE TABLE order_details 
+(
+    product_id	VARCHAR(512),
+    store_id	VARCHAR(512),
+    order_date	date,
+    selling_price	INT,
+    customer_id	INT,
+    order_id	INT primary key,
+    foreign key (store_id) references store_cities(store_id),
+    foreign key (product_id) references producthierarchy(product_id)
+);
+
+select * from order_details;
+
+# Combine all tables
+select o.*, p.*, s.* 
+	from order_details as o
+	join producthierarchy as p
+	on o.product_id = p.product_id
+	join store_cities as s
+	on o.store_id = s.store_id;
+
+select distinct category, count(product_id) from producthierarchy
+group by category;
+
+# Yesterday Orders
+SELECT p.category, count(o.order_id) AS Yday_Orders
+FROM order_details o 
+JOIN producthierarchy p
+ON o.product_id = p.product_id
+WHERE o.order_date = CURDATE() - INTERVAL 1 DAY
+GROUP BY p.category
+ORDER BY p.category;
+
+SELECT p.sub_category, count(o.order_id) AS Yday_Orders
+FROM order_details o 
+JOIN producthierarchy p
+ON o.product_id = p.product_id
+WHERE o.order_date = CURDATE() - INTERVAL 1 DAY
+GROUP BY p.sub_category
+ORDER BY p.sub_category;
+
+#Yesterday GMV(Gross Merchandise Value)
+SELECT p.category, SUM(o.selling_price) AS Yday_GMV
+FROM order_details as o
+join producthierarchy as p
+on o.product_id = p.product_id
+WHERE DATE(o.order_date) = CURDATE() - INTERVAL 1 DAY
+group by p.category
+order by p.category;
+
+SELECT p.sub_category, SUM(o.selling_price) AS Yday_GMV
+FROM order_details as o
+join producthierarchy as p
+on o.product_id = p.product_id
+WHERE DATE(o.order_date) = CURDATE() - INTERVAL 1 DAY
+group by p.sub_category
+order by p.sub_category;
+
+# Yesterday Unique users
+SELECT p.category, COUNT(DISTINCT o.customer_id) AS Yday_Unique_Users
+FROM order_details AS o
+JOIN producthierarchy AS p 
+ON o.product_id = p.product_id
+WHERE o.order_date = CURDATE() - INTERVAL 1 DAY
+GROUP BY p.category
+ORDER BY p.category;
+
+SELECT p.sub_category, COUNT(DISTINCT o.customer_id) AS Yday_Unique_Users
+FROM order_details AS o
+JOIN producthierarchy AS p 
+ON o.product_id = p.product_id
+WHERE o.order_date = CURDATE() - INTERVAL 1 DAY
+GROUP BY p.sub_category
+ORDER BY p.sub_category;
+
+# Yday_orders, Yday_GMV, Yday_revenue, Yday_Unique_user
+select p.category, count(distinct o.order_id) as Yday_Orders,
+sum(o.selling_price) as Yday_GMV,
+round(sum(o.selling_price)/1.18,2) as Yday_Revenue,
+count(distinct o.customer_id) as Yday_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where o.order_date = CURDATE() - INTERVAL 1 DAY
+group by p.category
+order by p.category;
+
+select p.sub_category, count(distinct o.order_id) as Yday_Orders,
+sum(o.selling_price) as Yday_GMV,
+round(sum(o.selling_price)/1.18,2) as Yday_Revenue,
+count(distinct o.customer_id) as Yday_Unique_user
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where o.order_date = CURDATE() - INTERVAL 1 DAY
+group by p.sub_category
+order by p.sub_category;
+
+/* Month To Date: MTD_orders, MTD_GMV, MTD_revenue, MTD_newuser */
+select p.category, count(distinct o.order_id) as MTD_Orders,
+sum(o.selling_price) as MTD_GMV,
+round(sum(o.selling_price)/1.18,2) as MTD_Revenue,
+count(distinct o.customer_id) as MTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where MONTH(o.order_date) = MONTH(CURDATE())
+    AND YEAR(o.order_date) = YEAR(CURDATE())
+group by p.category
+order by p.category;
+
+select p.sub_category, count(distinct order_id) as MTD_Orders,
+sum(selling_price) as MTD_GMV,
+round(sum(selling_price)/1.18,2) as MTD_Revenue,
+count(distinct customer_id) as MTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where MONTH(o.order_date) = MONTH(CURDATE())
+    AND YEAR(o.order_date) = YEAR(CURDATE())
+group by p.sub_category
+order by p.sub_category;
+
+/* Last Month To Date: LMTD_orders, LMTD_GMV, LMTD_revenue, LMTD_newuser */
+select p.category, count(distinct o.order_id) as LMTD_Orders,
+sum(o.selling_price) as LMTD_GMV,
+round(sum(o.selling_price)/1.18,2) as LMTD_Revenue,
+count(distinct o.customer_id) as LMTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where
+    o.order_date >= date_format(now() - interval 1 month, '%y-%m-01')
+    and o.order_date <= curdate()
+group by p.category
+order by p.category;
+
+select p.sub_category, count(distinct order_id) as LMTD_Orders,
+sum(selling_price) as LMTD_GMV,
+round(sum(selling_price)/1.18,2) as LMTD_Revenue,
+count(distinct customer_id) as LMTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where
+    o.order_date >= date_format(now() - interval 1 month, '%y-%m-01')
+    and o.order_date <= curdate()
+group by p.sub_category
+order by p.sub_category;
+
+/* Lat Month: LM_orders, LM_GMV, LM_revenue, LM_newuser */
+select p.category, count(distinct o.order_id) as LMTD_Orders,
+sum(o.selling_price) as LMTD_GMV,
+round(sum(o.selling_price)/1.18,2) as LMTD_Revenue,
+count(distinct o.customer_id) as LMTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where o.order_date >= date_format(now() - interval 1 month, '%y-%m-01')
+group by p.category
+order by p.category;
+
+select p.sub_category, count(distinct o.order_id) as LMTD_Orders,
+sum(o.selling_price) as LMTD_GMV,
+round(sum(o.selling_price)/1.18,2) as LMTD_Revenue,
+count(distinct o.customer_id) as LMTD_Unique_user 
+from order_details o
+left join producthierarchy p on o.product_id=p.product_id
+where o.order_date >= date_format(now() - interval 1 month, '%y-%m-01')
+group by p.sub_category
+order by p.sub_category;
+
+select r.category, count(distinct r.customer_id) as Yday_New_Users
+from (
+	select o.customer_id, 
+		rank() over (partition by o.customer_id order by o.order_date) as user_rank, p.category
+	from order_details as o
+    join producthierarchy as p
+    on o.product_id = p.product_id
+    where o.order_date = curdate() - interval 1 day
+    ) as r
+where user_rank = 1
+group by r.category;
