@@ -8,7 +8,7 @@ In this project, we will explore how linear regression analysis can be employed 
 on relevant patient attributes and biomarkers.
 
 Objective:
-    The primary objective of this project is to develop a predictive model using linear regression to estimate the likelihood of an individual developing diabetes based on their demographic information, medical history, and clinical measurements.
+    The primary objective of this project is to develop a predictive model using Classifier to estimate the likelihood of an individual developing diabetes based on their demographic information, medical history, and clinical measurements.
 
 Data Collection:
     Gather a dataset containing information on individuals, including features such as age, gender, 
